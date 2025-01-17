@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/main :: head}"></head>
+<body>
+    <div th:replace="~{layout/main :: nav}"></div>
+
+    <div class="container mt-4">
+        <h2>Edit Property</h2>
+        
+        <div th:if="${errorMessage}" class="alert alert-danger" role="alert">
+            <span th:text="${errorMessage}"></span>
+        </div>
+
+        <form th:action="@{/properties/{id}/edit(id=${property.id})}" method="post" th:object="${property}">
+            <div class="mb-3">
+                <label for="title" class="form-label">Title</label>
+                <input type="text" class="form-control" id="title" th:field="*{title}" required>
+                <div class="text-danger" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+            </div>
+            <div class="mb-3">
+                <label for="address" class="form-label">Address</label>
+                <input type="text" class="form-control" id="address" th:field="*{address}" required>
+                <div class="text-danger" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></div>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" th:field="*{description}" rows="3"></textarea>
+                <div class="text-danger" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
+            </div>
+            <div class="mb-3">
+                <label for="rent" class="form-label">Rent (€)</label>
+                <input type="number" class="form-control" id="rent" th:field="*{rent}" step="0.01" required>
+                <div class="text-danger" th:if="${#fields.hasErrors('rent')}" th:errors="*{rent}"></div>
+            </div>
+            <div class="mb-3">
+                <label for="bedrooms" class="form-label">Bedrooms</label>
+                <input type="number" class="form-control" id="bedrooms" th:field="*{bedrooms}" required>
+                <div class="text-danger" th:if="${#fields.hasErrors('bedrooms')}" th:errors="*{bedrooms}"></div>
+            </div>
+            <div class="mb-3">
+                <label for="bathrooms" class="form-label">Bathrooms</label>
+                <input type="number" class="form-control" id="bathrooms" th:field="*{bathrooms}" required>
+                <div class="text-danger" th:if="${#fields.hasErrors('bathrooms')}" th:errors="*{bathrooms}"></div>
+            </div>
+            <div class="mb-3">
+                <label for="size" class="form-label">Size (m²)</label>
+                <input type="number" class="form-control" id="size" th:field="*{size}" step="0.1" required>
+                <div class="text-danger" th:if="${#fields.hasErrors('size')}" th:errors="*{size}"></div>
+            </div>
+            <button type="submit" class="btn btn-primary">Update Property</button>
+            <a href="/properties" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+
+    <div th:replace="~{layout/main :: scripts}"></div>
+</body>
+</html>

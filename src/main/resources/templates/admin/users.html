@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout/main :: head">
+    <title>User Management - Admin Dashboard</title>
+</head>
+<body>
+    <div th:replace="layout/main :: nav"></div>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>User Management</h2>
+            <a th:href="@{/admin/dashboard}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+
+        <!-- Alert Messages -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Landlords Section -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Landlords</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="landlord : ${landlords}">
+                                <td th:text="${landlord.name}"></td>
+                                <td th:text="${landlord.email}"></td>
+                                <td th:text="${landlord.phone}"></td>
+                                <td>
+                                    <span th:if="${landlord.suspended}" class="badge bg-danger">Suspended</span>
+                                    <span th:unless="${landlord.suspended}" class="badge bg-success">Active</span>
+                                </td>
+                                <td>
+                                    <form th:action="@{/admin/users/{id}/suspend(id=${landlord.id})}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-warning btn-sm" 
+                                                th:text="${landlord.suspended ? 'Unsuspend' : 'Suspend'}">
+                                        </button>
+                                    </form>
+                                    <form th:action="@{/admin/users/{id}/delete(id=${landlord.id})}" method="post" class="d-inline"
+                                          onsubmit="return confirm('Are you sure you want to delete this user? This action cannot be undone.')">
+                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(landlords)}">
+                                <td colspan="5" class="text-center">No landlords found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tenants Section -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">Tenants</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="tenant : ${tenants}">
+                                <td th:text="${tenant.name}"></td>
+                                <td th:text="${tenant.email}"></td>
+                                <td th:text="${tenant.phone}"></td>
+                                <td>
+                                    <span th:if="${tenant.suspended}" class="badge bg-danger">Suspended</span>
+                                    <span th:unless="${tenant.suspended}" class="badge bg-success">Active</span>
+                                </td>
+                                <td>
+                                    <form th:action="@{/admin/users/{id}/suspend(id=${tenant.id})}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-warning btn-sm"
+                                                th:text="${tenant.suspended ? 'Unsuspend' : 'Suspend'}">
+                                        </button>
+                                    </form>
+                                    <form th:action="@{/admin/users/{id}/delete(id=${tenant.id})}" method="post" class="d-inline"
+                                          onsubmit="return confirm('Are you sure you want to delete this user? This action cannot be undone.')">
+                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(tenants)}">
+                                <td colspan="5" class="text-center">No tenants found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="layout/main :: footer"></div>
+    <div th:replace="layout/main :: scripts"></div>
+</body>
+</html>

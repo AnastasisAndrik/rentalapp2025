@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout/main :: head"></head>
+<body>
+    <div th:replace="layout/main :: nav"></div>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col">
+                <h2>Landlord Dashboard</h2>
+            </div>
+            <div class="col text-end">
+                <a href="/properties/new" class="btn btn-primary">Add New Property</a>
+            </div>
+        </div>
+
+        <!-- My Properties -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>My Properties</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Address</th>
+                                <th>Rent</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="property : ${properties}">
+                                <td th:text="${property.title}"></td>
+                                <td th:text="${property.address}"></td>
+                                <td>€<span th:text="${property.rent}"></span></td>
+                                <td th:text="${property.status}"></td>
+                                <td>
+                                    <a th:href="@{/properties/{id}/edit(id=${property.id})}" class="btn btn-primary btn-sm">Edit</a>
+                                    <form th:action="@{/properties/{id}(id=${property.id})}" method="post" class="d-inline">
+                                        <input type="hidden" name="_method" value="DELETE">
+                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rental Applications -->
+        <div class="card">
+            <div class="card-header">
+                <h4>Pending Applications</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Property</th>
+                                <th>Tenant</th>
+                                <th>Application Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="application : ${applications}">
+                                <td th:text="${application.property.title}"></td>
+                                <td th:text="${application.tenant.name}"></td>
+                                <td th:text="${#temporals.format(application.applicationDate, 'dd-MM-yyyy')}"></td>
+                                <td>
+                                    <form th:action="@{/applications/{id}/approve(id=${application.id})}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                                    </form>
+                                    <form th:action="@{/applications/{id}/reject(id=${application.id})}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

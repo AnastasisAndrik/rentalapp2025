@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout/main :: head}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+</head>
+<body>
+    <div th:replace="~{layout/main :: nav}"></div>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Properties</h2>
+            <a href="/properties/new" class="btn btn-success" sec:authorize="hasRole('LANDLORD')">
+                <i class="fas fa-plus"></i> Register New Property
+            </a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Address</th>
+                        <th>Rent</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="property : ${properties}">
+                        <td th:text="${property.title}"></td>
+                        <td th:text="${property.address}"></td>
+                        <td>€<span th:text="${property.rent}"></span></td>
+                        <td th:text="${property.status}"></td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" 
+                                    th:if="${#authorization.expression('hasRole(''TENANT'')')}"
+                                    th:onclick="'bookAppointment(' + ${property.id} + ')'"
+                                    th:data-property-id="${property.id}">
+                                <i class="far fa-calendar-alt"></i> Book Appointment
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Appointment Modal -->
+    <div class="modal fade" id="appointmentModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Book Appointment</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="appointmentDateTime" class="form-control" placeholder="Select date and time">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmBooking()">Book</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{layout/main :: scripts}"></div>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        let currentPropertyId = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            flatpickr("#appointmentDateTime", {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                minTime: "10:00",
+                maxTime: "18:00",
+                minDate: "today"
+            });
+        });
+
+        function bookAppointment(propertyId) {
+            currentPropertyId = propertyId;
+            $('#appointmentModal').modal('show');
+        }
+
+        function confirmBooking() {
+            const dateTime = document.getElementById('appointmentDateTime').value;
+            if (!dateTime) {
+                alert('Please select a date and time');
+                return;
+            }
+
+            fetch('/api/appointments?propertyId=' + currentPropertyId + '&dateTime=' + encodeURIComponent(dateTime), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Appointment booked successfully!');
+                    $('#appointmentModal').modal('hide');
+                } else {
+                    alert('Failed to book appointment. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while booking the appointment.');
+            });
+        }
+    </script>
+</body>
+</html>

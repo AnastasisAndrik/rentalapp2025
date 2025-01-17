@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout/main :: head"></head>
+<body>
+    <div th:replace="layout/main :: nav"></div>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Admin Dashboard</h2>
+            <a th:href="@{/admin/users}" class="btn btn-primary">
+                <i class="fas fa-users"></i> Manage Users
+            </a>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Properties</h5>
+                        <h2 class="card-text" th:text="${totalProperties ?: 0}">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Active Users</h5>
+                        <h2 class="card-text" th:text="${activeUsers ?: 0}">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Pending Approvals</h5>
+                        <h2 class="card-text" th:text="${pendingApprovals ?: 0}">0</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Property Approvals -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Pending Property Approvals</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Landlord</th>
+                                <th>Address</th>
+                                <th>Rent</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="property : ${pendingProperties}">
+                                <td th:text="${property.title}"></td>
+                                <td th:text="${property.owner.name}"></td>
+                                <td th:text="${property.address}"></td>
+                                <td>€<span th:text="${property.rent}"></span></td>
+                                <td>
+                                    <form th:action="@{/admin/properties/{id}/approve(id=${property.id})}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                                    </form>
+                                    <form th:action="@{/admin/properties/{id}/reject(id=${property.id})}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tenant Verification -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Pending Tenant Verifications</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="tenant : ${pendingTenants}">
+                                <td th:text="${tenant.name}"></td>
+                                <td th:text="${tenant.email}"></td>
+                                <td th:text="${tenant.phone}"></td>
+                                <td>
+                                    <form th:action="@{/admin/tenants/{id}/verify(id=${tenant.id})}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-success btn-sm">Verify</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

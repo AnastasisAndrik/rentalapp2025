@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="layout/main :: head"></head>
+<body>
+    <div th:replace="layout/main :: nav"></div>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col">
+                <h2>Available Properties</h2>
+            </div>
+            <div class="col text-end" sec:authorize="hasRole('LANDLORD')">
+                <a href="/properties/new" class="btn btn-primary">Add New Property</a>
+            </div>
+        </div>
+
+        <!-- Search and Filter Form -->
+        <form th:action="@{/properties}" method="get" class="mb-4">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <input type="number" class="form-control" name="minRent" placeholder="Min Rent" th:value="${param.minRent}">
+                </div>
+                <div class="col-md-3">
+                    <input type="number" class="form-control" name="maxRent" placeholder="Max Rent" th:value="${param.maxRent}">
+                </div>
+                <div class="col-md-2">
+                    <input type="number" class="form-control" name="minBedrooms" placeholder="Min Bedrooms" th:value="${param.minBedrooms}">
+                </div>
+                <div class="col-md-2">
+                    <input type="number" class="form-control" name="minBathrooms" placeholder="Min Bathrooms" th:value="${param.minBathrooms}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Property List -->
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            <div class="col" th:each="property : ${properties}">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title" th:text="${property.title}"></h5>
+                        <p class="card-text" th:text="${property.description}"></p>
+                        <ul class="list-unstyled">
+                            <li><strong>Rent:</strong> €<span th:text="${property.rent}"></span></li>
+                            <li><strong>Bedrooms:</strong> <span th:text="${property.bedrooms}"></span></li>
+                            <li><strong>Bathrooms:</strong> <span th:text="${property.bathrooms}"></span></li>
+                            <li><strong>Size:</strong> <span th:text="${property.size}"></span> m²</li>
+                            <li><strong>Address:</strong> <span th:text="${property.address}"></span></li>
+                        </ul>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-grid gap-2">
+                            <a th:href="@{/properties/{id}(id=${property.id})}" class="btn btn-primary">View Details</a>
+                            <a th:href="@{/applications/new(propertyId=${property.id})}" 
+                               class="btn btn-success"
+                               sec:authorize="hasRole('TENANT')">Apply Now</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
