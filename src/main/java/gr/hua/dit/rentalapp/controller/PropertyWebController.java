@@ -50,7 +50,7 @@ public class PropertyWebController {
         }
         
         try {
-            Property savedProperty = propertyService.createProperty(property, userDetails.getId());
+            propertyService.createProperty(property, userDetails.getId());
             redirectAttributes.addFlashAttribute("successMessage", "Property created successfully!");
             return "redirect:/properties";
         } catch (Exception e) {

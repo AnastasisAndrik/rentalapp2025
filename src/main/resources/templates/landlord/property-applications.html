@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/main :: head}">
+    <title>Property Applications</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .verified-badge {
+            color: #1DA1F2;
+            margin-left: 4px;
+        }
+        .applicant-info {
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div th:replace="~{layout/main :: nav}"></div>
+    <div class="container mt-4">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Applications for <span th:text="${property.title}">Property</span></h3>
+                    <a href="/landlord/properties" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Properties
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Property Details Summary -->
+                <div class="alert alert-light mb-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Address:</strong> <span th:text="${property.address}">Address</span></p>
+                            <p class="mb-1"><strong>Status:</strong> <span class="badge bg-primary" th:text="${property.status}">Status</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Monthly Rent:</strong> €<span th:text="${property.rent}">1000</span></p>
+                            <p class="mb-1"><strong>Details:</strong> 
+                                <span th:text="${property.bedrooms}">3</span> bed, 
+                                <span th:text="${property.bathrooms}">2</span> bath, 
+                                <span th:text="${property.size}">100</span>m²
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Applications Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Applicant</th>
+                                <th>Status</th>
+                                <th>Applied Date</th>
+                                <th>Moving Date</th>
+                                <th>Contact</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- If no applications -->
+                            <tr th:if="${#lists.isEmpty(applications)}">
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="fas fa-inbox fa-2x text-muted mb-3 d-block"></i>
+                                    No applications received yet
+                                </td>
+                            </tr>
+                            <!-- List of applications -->
+                            <tr th:each="app : ${applications}">
+                                <td>
+                                    <div class="applicant-info">
+                                        <span th:text="${app.tenant.name}">John Doe</span>
+                                        <i th:if="${app.tenant.verified}" class="fas fa-check-circle verified-badge" 
+                                           title="Verified Tenant"></i>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge" 
+                                          th:classappend="${app.status == 'PENDING' ? 'bg-warning' : 
+                                                         (app.status == 'APPROVED' ? 'bg-success' : 'bg-danger')}"
+                                          th:text="${app.status}">Status</span>
+                                </td>
+                                <td th:text="${#temporals.format(app.applicationDate, 'dd MMM yyyy')}">01 Jan 2025</td>
+                                <td th:text="${#temporals.format(app.movingDate, 'dd MMM yyyy')}">01 Feb 2025</td>
+                                <td>
+                                    <a th:href="'mailto:' + ${app.tenant.email}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-envelope"></i>
+                                    </a>
+                                </td>
+                                <td>
+                                    <div class="btn-group" th:if="${app.status == 'PENDING'}">
+                                        <button class="btn btn-sm btn-success me-2" 
+                                                th:onclick="'approveApplication(' + ${app.id} + ')'">
+                                            <i class="fas fa-check me-1"></i>Approve
+                                        </button>
+                                        <button class="btn btn-sm btn-danger"
+                                                th:onclick="'rejectApplication(' + ${app.id} + ')'">
+                                            <i class="fas fa-times me-1"></i>Reject
+                                        </button>
+                                    </div>
+                                    <span th:if="${app.status != 'PENDING'}" 
+                                          th:text="${app.status == 'APPROVED' ? 'Approved' : 'Rejected'}"
+                                          class="text-muted">Status</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    function approveApplication(id) {
+        if (confirm('Are you sure you want to approve this application? This will reject all other pending applications.')) {
+            fetch(`/landlord/applications/${id}/approve`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || 'Failed to approve application');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to approve application');
+            });
+        }
+    }
+
+    function rejectApplication(id) {
+        if (confirm('Are you sure you want to reject this application?')) {
+            fetch(`/landlord/applications/${id}/reject`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || 'Failed to reject application');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to reject application');
+            });
+        }
+    }
+    </script>
+</body>
+</html>

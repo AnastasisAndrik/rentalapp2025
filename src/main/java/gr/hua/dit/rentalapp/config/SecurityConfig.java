@@ -30,9 +30,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/login", "/register", "/css/**", "/js/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/properties/**").hasAnyRole("LANDLORD", "ADMIN")
-                .requestMatchers("/properties/new", "/properties").hasAnyRole("LANDLORD", "ADMIN")
-                .requestMatchers("/properties").hasAnyRole("LANDLORD", "TENANT", "ADMIN")
+                .requestMatchers("/landlord/**", "/api/properties/**").hasRole("LANDLORD")
                 .requestMatchers("/tenant/**").hasRole("TENANT")
                 .anyRequest().authenticated()
             )

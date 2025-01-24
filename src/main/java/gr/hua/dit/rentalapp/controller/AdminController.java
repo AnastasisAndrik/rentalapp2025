@@ -7,6 +7,8 @@ import gr.hua.dit.rentalapp.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/admin")
 public class AdminController {
@@ -47,5 +49,20 @@ public class AdminController {
                     return ResponseEntity.ok().<Void>build();
                 })
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PatchMapping("/users/{id}/verify")
+    public ResponseEntity<User> verifyUser(@PathVariable Long id) {
+        return userService.getUserById(id)
+                .map(user -> {
+                    user.setVerified(true);
+                    return ResponseEntity.ok(userService.updateUser(id, user));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/users/unverified")
+    public ResponseEntity<List<User>> getUnverifiedUsers() {
+        return ResponseEntity.ok(userService.getUnverifiedUsers());
     }
 }

@@ -29,7 +29,14 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
+    @Column(nullable = false)
     private boolean suspended = false;
+
+    @Column(nullable = false)
+    private Boolean approved = true;
+
+    @Column(nullable = false)
+    private boolean verified = false;
 
     // Getters and Setters
     public Long getId() {
@@ -86,5 +93,21 @@ public class User {
 
     public void setSuspended(boolean suspended) {
         this.suspended = suspended;
+    }
+
+    public Boolean getApproved() {
+        return approved;
+    }
+
+    public void setApproved(Boolean approved) {
+        this.approved = approved;
+    }
+
+    public boolean isVerified() {
+        return verified;
+    }
+
+    public void setVerified(boolean verified) {
+        this.verified = verified;
     }
 }

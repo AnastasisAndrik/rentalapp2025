@@ -133,20 +133,20 @@
                                 <!-- Show Book Appointment button only for logged-in tenants -->
                                 <div sec:authorize="hasRole('TENANT')" class="mt-3">
                                     <button class="btn btn-primary w-100" 
-                                            th:onclick="'bookAppointment(' + ${property.id} + ')'">
-                                        <i class="far fa-calendar-alt"></i> Book Appointment
+                                            th:onclick="'confirmRent(' + ${property.id} + ')'">
+                                        <i class="fas fa-key"></i> Apply Now
                                     </button>
                                 </div>
                                 <!-- Show Login/Register button for non-authenticated users -->
                                 <div sec:authorize="!isAuthenticated()" class="mt-3">
                                     <a href="/login" class="btn btn-outline-primary w-100">
-                                        <i class="fas fa-sign-in-alt"></i> Login or Register to Book Appointment
+                                        <i class="fas fa-sign-in-alt"></i> Login or Register to Apply
                                     </a>
                                 </div>
                                 <!-- Optional: Show message for authenticated non-tenants -->
                                 <div sec:authorize="isAuthenticated() && !hasRole('TENANT')" class="mt-3">
                                     <div class="alert alert-info mb-0">
-                                        Only tenants can book appointments
+                                        Only tenants can apply for properties
                                     </div>
                                 </div>
                             </div>
@@ -162,160 +162,72 @@
         </div>
     </div>
 
-    <!-- Appointment Modal -->
-    <div class="modal fade" id="appointmentModal" tabindex="-1" data-bs-backdrop="static">
+    <div th:replace="~{layout/main :: scripts}"></div>
+
+    <!-- Rent Confirmation Modal -->
+    <div class="modal fade" id="rentConfirmationModal" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Book Appointment</h5>
+                    <h5 class="modal-title">Confirm Application</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="appointmentForm">
-                        <div class="mb-3">
-                            <label class="form-label">Select Date</label>
-                            <input type="text" class="form-control" id="appointmentDate" readonly>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Select Time</label>
-                            <div class="time-slots-container" id="timeSlots"></div>
-                        </div>
-                    </form>
+                    <p>Do you want to apply for this property?</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" id="bookButton" disabled>Book Appointment</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="proceedRentButton">Apply</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div th:replace="~{layout/main :: scripts}"></div>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script th:inline="javascript">
+        let currentPropertyId = null;
+        let rentModal = null;
+
         document.addEventListener('DOMContentLoaded', function() {
-            initializeAppointmentSystem();
+            // Initialize modal
+            rentModal = new bootstrap.Modal(document.getElementById('rentConfirmationModal'));
+            
+            // Add event listener to proceed button
+            document.getElementById('proceedRentButton').addEventListener('click', handleRent);
         });
 
-        let currentPropertyId = null;
-        let selectedDate = null;
-        let selectedTime = null;
-        let appointmentModal = null;
-        let flatpickrInstance = null;
-
-        const timeSlots = [
-            "10:00", "11:00", "12:00", "13:00", "14:00",
-            "15:00", "16:00", "17:00", "18:00"
-        ];
-
-        function initializeAppointmentSystem() {
-            // Initialize modal
-            appointmentModal = new bootstrap.Modal(document.getElementById('appointmentModal'), {
-                keyboard: false
-            });
-
-            // Initialize date picker
-            flatpickrInstance = flatpickr("#appointmentDate", {
-                enableTime: false,
-                dateFormat: "Y-m-d",
-                minDate: "today",
-                disable: [
-                    function(date) {
-                        return (date.getDay() === 0 || date.getDay() === 6);
-                    }
-                ],
-                onChange: function(selectedDates, dateStr) {
-                    selectedDate = dateStr;
-                    updateBookButtonState();
-                }
-            });
-
-            // Create time slots
-            createTimeSlots();
-
-            // Add event listener to book button
-            document.getElementById('bookButton').addEventListener('click', handleBooking);
-
-            // Add event listener to modal close
-            document.getElementById('appointmentModal').addEventListener('hidden.bs.modal', resetForm);
-        }
-
-        function createTimeSlots() {
-            const container = document.getElementById('timeSlots');
-            container.innerHTML = '';
-
-            timeSlots.forEach(time => {
-                const slot = document.createElement('div');
-                slot.className = 'time-slot';
-                slot.textContent = time;
-                slot.addEventListener('click', () => handleTimeSlotClick(slot, time));
-                container.appendChild(slot);
-            });
-        }
-
-        function handleTimeSlotClick(element, time) {
-            document.querySelectorAll('.time-slot').forEach(slot => {
-                slot.classList.remove('selected');
-            });
-            element.classList.add('selected');
-            selectedTime = time;
-            updateBookButtonState();
-        }
-
-        function updateBookButtonState() {
-            const bookButton = document.getElementById('bookButton');
-            bookButton.disabled = !(selectedDate && selectedTime);
-        }
-
-        function resetForm() {
-            selectedDate = null;
-            selectedTime = null;
-            if (flatpickrInstance) {
-                flatpickrInstance.clear();
-            }
-            document.querySelectorAll('.time-slot').forEach(slot => {
-                slot.classList.remove('selected');
-            });
-            updateBookButtonState();
-        }
-
-        function bookAppointment(propertyId) {
+        function confirmRent(propertyId) {
             currentPropertyId = propertyId;
-            resetForm();
-            appointmentModal.show();
+            rentModal.show();
         }
 
-        function handleBooking() {
-            if (!selectedDate || !selectedTime || !currentPropertyId) {
-                alert('Please select both date and time');
+        function handleRent() {
+            if (!currentPropertyId) {
+                alert('Error: No property selected');
                 return;
             }
 
-            const dateTime = `${selectedDate} ${selectedTime}`;
-
-            fetch('/api/appointments', {
+            // Make a POST request to apply for the property
+            fetch(`/tenant/apply/${currentPropertyId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    propertyId: currentPropertyId,
-                    dateTime: dateTime
-                })
+                }
             })
             .then(response => response.json())
             .then(data => {
-                if (data.error) {
-                    throw new Error(data.error);
+                if (!data.success) {
+                    throw new Error(data.message);
                 }
-                alert('Appointment booked successfully!');
-                appointmentModal.hide();
+                rentModal.hide();
+                alert(data.message);
+                window.location.href = '/tenant/dashboard';
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert(error.message || 'Failed to book appointment. Please try again.');
+                alert(error.message || 'Failed to apply for property. Please try again.');
             });
         }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </body>
 </html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/main :: head}">
+    <title>Property Applications</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .verified-badge {
+            color: #1DA1F2;
+            margin-left: 4px;
+        }
+        .applicant-info {
+            display: flex;
+            align-items: center;
+        }
+        .fade-out {
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+        }
+        tr {
+            transition: all 0.5s ease-out;
+        }
+        .property-title {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .property-details {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div th:replace="~{layout/main :: nav}"></div>
+    <div class="container mt-4">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Property Applications</h3>
+                    <a href="/landlord/properties" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Properties
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="alertBox" style="display: none;" class="alert alert-success"></div>
+
+                <!-- Applications Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Property</th>
+                                <th>Applicant</th>
+                                <th>Status</th>
+                                <th>Applied Date</th>
+                                <th>Contact</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- If no applications -->
+                            <tr th:if="${#lists.isEmpty(applications)}">
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="fas fa-inbox fa-2x text-muted mb-3 d-block"></i>
+                                    No applications received yet
+                                </td>
+                            </tr>
+                            <!-- List of applications -->
+                            <tr th:each="app : ${applications}" th:id="'app-' + ${app.id}">
+                                <td>
+                                    <div class="property-title" th:text="${app.property.title}">Property Title</div>
+                                    <div class="property-details">
+                                        <span th:text="${app.property.bedrooms}">3</span> bed, 
+                                        <span th:text="${app.property.bathrooms}">2</span> bath, 
+                                        €<span th:text="${app.property.rent}">1000</span>/month
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="applicant-info">
+                                        <span th:text="${app.tenant.name}">John Doe</span>
+                                        <i th:if="${app.tenant.verified}" class="fas fa-check-circle verified-badge" 
+                                           title="Verified Tenant"></i>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge" 
+                                          th:classappend="${app.status == T(gr.hua.dit.rentalapp.entity.ApplicationStatus).PENDING ? 'bg-warning' : 
+                                                         (app.status == T(gr.hua.dit.rentalapp.entity.ApplicationStatus).APPROVED ? 'bg-success' : 'bg-danger')}"
+                                          th:text="${app.status}">Status</span>
+                                </td>
+                                <td th:text="${#temporals.format(app.applicationDate, 'dd MMM yyyy')}">01 Jan 2025</td>
+                                <td>
+                                    <a th:href="'mailto:' + ${app.tenant.email}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-envelope"></i>
+                                    </a>
+                                </td>
+                                <td>
+                                    <div class="btn-group" th:if="${app.status == T(gr.hua.dit.rentalapp.entity.ApplicationStatus).PENDING}">
+                                        <button class="btn btn-sm btn-success" th:onclick="'approveApplication(' + ${app.id} + ')'">
+                                            <i class="fas fa-check me-1"></i>Approve
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" th:onclick="'rejectApplication(' + ${app.id} + ')'">
+                                            <i class="fas fa-times me-1"></i>Reject
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    function showAlert(message, type = 'success') {
+        const alertBox = document.getElementById('alertBox');
+        alertBox.className = `alert alert-${type} fade show`;
+        alertBox.textContent = message;
+        alertBox.style.display = 'block';
+        
+        setTimeout(() => {
+            alertBox.style.display = 'none';
+        }, 3000);
+    }
+
+    function removeApplication(id) {
+        const row = document.getElementById('app-' + id);
+        row.classList.add('fade-out');
+        
+        setTimeout(() => {
+            row.remove();
+            
+            // Check if there are any applications left
+            const tbody = document.querySelector('tbody');
+            if (!tbody.querySelector('tr:not([colspan])')) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <i class="fas fa-inbox fa-2x text-muted mb-3 d-block"></i>
+                            No applications received yet
+                        </td>
+                    </tr>`;
+            }
+        }, 500);
+    }
+
+    function handleResponse(id, action) {
+        return fetch('/landlord/applications/' + id + '/' + action, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.message);
+            }
+            showAlert(data.message);
+            removeApplication(id);
+        })
+        .catch(err => {
+            showAlert(err.message || 'Failed to ' + action + ' application', 'danger');
+        });
+    }
+
+    function approveApplication(id) {
+        if (confirm('Are you sure you want to approve this application?')) {
+            handleResponse(id, 'approve');
+        }
+    }
+
+    function rejectApplication(id) {
+        if (confirm('Are you sure you want to reject this application?')) {
+            handleResponse(id, 'reject');
+        }
+    }
+    </script>
+</body>
+</html>

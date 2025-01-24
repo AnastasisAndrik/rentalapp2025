@@ -96,7 +96,19 @@ public class UserService implements UserDetailsService {
             admin.setEmail("admin@admin");
             admin.setPassword(passwordEncoder.encode("admin"));
             admin.setRole(UserRole.ADMIN);
+            admin.setVerified(true); // Admin is always verified
             userRepository.save(admin);
         }
+    }
+
+    public List<User> getUnverifiedUsers() {
+        return userRepository.findByVerifiedFalseAndRole(UserRole.TENANT);
+    }
+
+    public User verifyUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalStateException("User not found"));
+        user.setVerified(true);
+        return userRepository.save(user);
     }
 }

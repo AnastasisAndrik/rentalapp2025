@@ -1,99 +1,82 @@
 package gr.hua.dit.rentalapp.controller;
 
-import gr.hua.dit.rentalapp.entity.RentalApplication;
-import gr.hua.dit.rentalapp.entity.ApplicationStatus;
-import gr.hua.dit.rentalapp.repository.RentalApplicationRepository;
-import gr.hua.dit.rentalapp.repository.PropertyRepository;
-import gr.hua.dit.rentalapp.repository.TenantRepository;
+import gr.hua.dit.rentalapp.entity.*;
+import gr.hua.dit.rentalapp.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/applications")
 public class RentalApplicationController {
-    
+
     @Autowired
     private RentalApplicationRepository applicationRepository;
-    
-    @Autowired
-    private PropertyRepository propertyRepository;
-    
+
     @Autowired
     private TenantRepository tenantRepository;
 
-    @GetMapping
-    public List<RentalApplication> getAllApplications() {
-        return applicationRepository.findAll();
-    }
+    @Autowired
+    private PropertyRepository propertyRepository;
 
-    @GetMapping("/{id}")
-    public ResponseEntity<RentalApplication> getApplicationById(@PathVariable Long id) {
-        return applicationRepository.findById(id)
-                .map(ResponseEntity::ok)
+    @GetMapping("/tenant/{id}")
+    @PreAuthorize("hasRole('TENANT')")
+    public ResponseEntity<?> getApplicationsByTenant(@PathVariable Long id, Authentication authentication) {
+        return tenantRepository.findById(id)
+                .map(tenant -> ResponseEntity.ok(applicationRepository.findByTenant(tenant)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/tenant/{tenantId}")
-    public List<RentalApplication> getApplicationsByTenant(@PathVariable Long tenantId) {
-        return tenantRepository.findById(tenantId)
-                .map(applicationRepository::findByTenant)
-                .orElse(List.of());
-    }
-
-    @GetMapping("/property/{propertyId}")
-    public List<RentalApplication> getApplicationsByProperty(@PathVariable Long propertyId) {
-        return propertyRepository.findById(propertyId)
-                .map(applicationRepository::findByProperty)
-                .orElse(List.of());
-    }
-
-    @PostMapping
-    public ResponseEntity<RentalApplication> createApplication(
-            @Valid @RequestBody RentalApplication application,
-            @RequestParam Long tenantId,
-            @RequestParam Long propertyId) {
-        
-        var tenant = tenantRepository.findById(tenantId);
-        var property = propertyRepository.findById(propertyId);
-        
-        if (tenant.isEmpty() || property.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        application.setTenant(tenant.get());
-        application.setProperty(property.get());
-        application.setStatus(ApplicationStatus.PENDING);
-        application.setApplicationDate(LocalDate.now());
-        
-        RentalApplication savedApplication = applicationRepository.save(application);
-        return ResponseEntity.ok(savedApplication);
-    }
-
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<RentalApplication> updateApplicationStatus(
-            @PathVariable Long id,
-            @RequestParam ApplicationStatus status) {
-        
-        return applicationRepository.findById(id)
-                .map(application -> {
-                    application.setStatus(status);
-                    RentalApplication updatedApplication = applicationRepository.save(application);
-                    return ResponseEntity.ok(updatedApplication);
-                })
+    @GetMapping("/property/{id}")
+    @PreAuthorize("hasRole('LANDLORD')")
+    public ResponseEntity<?> getApplicationsByProperty(@PathVariable Long id, Authentication authentication) {
+        return propertyRepository.findById(id)
+                .map(property -> ResponseEntity.ok(applicationRepository.findByProperty(property)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteApplication(@PathVariable Long id) {
-        if (!applicationRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
+    @PostMapping("/apply")
+    @PreAuthorize("hasRole('TENANT')")
+    public ResponseEntity<?> applyForProperty(@RequestParam Long propertyId, Authentication authentication) {
+        try {
+            Tenant tenant = tenantRepository.findByEmail(authentication.getName())
+                    .orElseThrow(() -> new RuntimeException("Tenant not found"));
+
+            Property property = propertyRepository.findById(propertyId)
+                    .orElseThrow(() -> new RuntimeException("Property not found"));
+
+            // Check if tenant already has a pending or approved application for this property
+            if (applicationRepository.existsByTenantAndPropertyAndNotRejected(tenant, property)) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "You already have an active application for this property"
+                ));
+            }
+
+            RentalApplication application = new RentalApplication();
+            application.setTenant(tenant);
+            application.setProperty(property);
+            application.setStatus(ApplicationStatus.PENDING);
+            application.setApplicationDate(LocalDate.now());
+            application.setMovingDate(LocalDate.now().plusDays(30)); // Default move-in date 30 days from now
+
+            applicationRepository.save(application);
+
+            return ResponseEntity.ok().body(Map.of(
+                "success", true,
+                "message", "Application submitted successfully"
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
         }
-        applicationRepository.deleteById(id);
-        return ResponseEntity.ok().build();
     }
 }

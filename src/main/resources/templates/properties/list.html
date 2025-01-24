@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:replace="layout/main :: head"></head>
+<head th:replace="~{layout/main :: head}"></head>
 <body>
-    <div th:replace="layout/main :: nav"></div>
+    <div th:replace="~{layout/main :: nav}"></div>
 
     <div class="container mt-4">
         <div class="row mb-4">
@@ -54,9 +54,19 @@
                     <div class="card-footer">
                         <div class="d-grid gap-2">
                             <a th:href="@{/properties/{id}(id=${property.id})}" class="btn btn-primary">View Details</a>
-                            <a th:href="@{/applications/new(propertyId=${property.id})}" 
-                               class="btn btn-success"
-                               sec:authorize="hasRole('TENANT')">Apply Now</a>
+                            <div sec:authorize="hasRole('TENANT')">
+                                <!-- For verified tenants -->
+                                <button th:if="${#authentication.principal.verified}"
+                                        class="btn btn-success w-100"
+                                        th:onclick="'bookAppointment(' + ${property.id} + ')'">
+                                    <i class="fas fa-key"></i> Rent Now
+                                </button>
+                                <!-- For unverified tenants -->
+                                <button th:unless="${#authentication.principal.verified}"
+                                        class="btn btn-warning w-100" disabled>
+                                    <i class="fas fa-clock"></i> Awaiting Verification
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

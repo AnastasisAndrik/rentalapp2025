@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    
+<head th:replace="~{layout/main :: head}">
+    <meta charset="UTF-8">
+    <title>Your Applications</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .fade-out {
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+        }
+        tr {
+            transition: all 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{layout/main :: nav}"></div>
+
+    <div class="container mt-4">
+        <h2>Your Applications</h2>
+        
+        <div id="alertBox" style="display: none;" class="alert alert-success"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+        <div id="noApplications" th:if="${applications.empty}" class="alert alert-info">
+            You have no applications yet.
+        </div>
+
+        <div id="applicationsTable" th:if="${!applications.empty}" class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="app : ${applications}" th:id="'app-' + ${app.id}">
+                        <td th:text="${app.property.title}">Property Title</td>
+                        <td th:text="${#temporals.format(app.applicationDate, 'dd/MM/yyyy')}">01/01/2025</td>
+                        <td th:text="${app.status}">PENDING</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger" 
+                                    th:attr="onclick=|cancelApplication(${app.id})|"
+                                    th:disabled="${app.status == T(gr.hua.dit.rentalapp.entity.ApplicationStatus).APPROVED}">
+                                Cancel
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+    function showAlert(message, type = 'success') {
+        const alertBox = document.getElementById('alertBox');
+        alertBox.className = `alert alert-${type} fade show`;
+        alertBox.textContent = message;
+        alertBox.style.display = 'block';
+        
+        setTimeout(() => {
+            alertBox.style.display = 'none';
+        }, 3000);
+    }
+
+    function removeApplication(id) {
+        const row = document.getElementById('app-' + id);
+        row.classList.add('fade-out');
+        
+        setTimeout(() => {
+            row.remove();
+            
+            // Check if there are any applications left
+            const tbody = document.querySelector('tbody');
+            if (!tbody.hasChildNodes()) {
+                document.getElementById('applicationsTable').style.display = 'none';
+                document.getElementById('noApplications').style.display = 'block';
+            }
+        }, 500);
+    }
+
+    function cancelApplication(id) {
+        if (confirm('Are you sure you want to cancel this application?')) {
+            fetch('/tenant/applications/' + id + '/cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) {
+                    throw new Error(data.message);
+                }
+                showAlert(data.message);
+                removeApplication(id);
+            })
+            .catch(err => {
+                showAlert(err.message || 'Failed to cancel application', 'danger');
+            });
+        }
+    }
+    </script>
+</body>
+</html>

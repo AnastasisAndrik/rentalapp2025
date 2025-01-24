@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "rental_applications")
+@Table(name = "rentalapplications")
 public class RentalApplication {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -1,48 +1,46 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
 <head th:fragment="head">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rental App - HUA</title>
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- Custom CSS -->
     <link href="/css/custom.css" rel="stylesheet">
-    <style>
-        .time-slot {
-            display: inline-block;
-            padding: 10px 15px;
-            margin: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .time-slot:hover {
-            background-color: #f8f9fa;
-            border-color: #0d6efd;
-        }
-        .time-slot.selected {
-            background-color: #0d6efd;
-            color: white;
-            border-color: #0d6efd;
-        }
-        .flatpickr-calendar {
-            background-color: white;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .flatpickr-day.selected {
-            background: #0d6efd !important;
-            border-color: #0d6efd !important;
-        }
-        .time-slots-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 15px;
-        }
-    </style>
+    <!-- Page specific styles -->
+    <th:block layout:fragment="styles">
+        <style>
+            .time-slot {
+                display: inline-block;
+                padding: 10px 15px;
+                margin: 5px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .time-slot:hover {
+                background-color: #f8f9fa;
+                border-color: #0d6efd;
+            }
+            .time-slot.selected {
+                background-color: #0d6efd;
+                color: white;
+                border-color: #0d6efd;
+            }
+            .time-slots-container {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-top: 15px;
+            }
+        </style>
+    </th:block>
 </head>
 <body>
     <nav th:fragment="nav" class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -53,17 +51,23 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/properties">Properties</a>
+                    <li class="nav-item" sec:authorize="!isAuthenticated()">
+                        <a class="nav-link" href="/">Home</a>
                     </li>
                     <li class="nav-item" sec:authorize="hasRole('LANDLORD')">
-                        <a class="nav-link" href="/landlord/dashboard">Landlord Dashboard</a>
+                        <a class="nav-link" href="/landlord/alerts">Alerts</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('LANDLORD')">
+                        <a class="nav-link" href="/landlord/properties">Manage Properties</a>
                     </li>
                     <li class="nav-item" sec:authorize="hasRole('TENANT')">
-                        <a class="nav-link" href="/tenant/dashboard">Tenant Dashboard</a>
+                        <a class="nav-link" href="/tenant/alerts">Alerts</a>
                     </li>
                     <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-                        <a class="nav-link" href="/admin/dashboard">Admin Dashboard</a>
+                        <a class="nav-link" href="/admin/users">Manage Users</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" href="/admin/properties">Manage Properties</a>
                     </li>
                 </ul>
                 <ul class="navbar-nav">
@@ -108,7 +112,6 @@
     <div th:fragment="scripts">
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
         <script src="/js/main.js"></script>
     </div>
 </body>
