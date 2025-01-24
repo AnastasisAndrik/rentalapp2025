@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout/main :: head}">
+    <meta charset="UTF-8">
+    <title>Manage Properties</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .fade-out {
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+        }
+        tr {
+            transition: all 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{layout/main :: nav}"></div>
+    <div class="container mt-4">
+        <h2>Manage Properties</h2>
+        
+        <div id="alertBox" style="display: none;" class="alert alert-success"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+
+        <div id="noProperties" th:if="${properties.empty}" class="alert alert-info">
+            There are no properties in the system.
+        </div>
+
+        <div id="propertiesTable" th:if="${!properties.empty}" class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Landlord</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="property : ${properties}" th:id="'property-' + ${property.id}">
+                        <td th:text="${property.title}">Property Title</td>
+                        <td th:text="${property.owner.name}">Landlord Name</td>
+                        <td th:text="${property.rent}">1000</td>
+                        <td th:text="${property.status}">AVAILABLE</td>
+                        <td>
+                            <form th:action="@{/admin/properties/{id}/delete(id=${property.id})}" method="post" style="display: inline;">
+                                <button class="btn btn-sm btn-danger" 
+                                        onclick="return confirm('Are you sure you want to delete this property?')"
+                                        type="submit">
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+    function showAlert(message, type = 'success') {
+        const alertBox = document.getElementById('alertBox');
+        alertBox.className = `alert alert-${type} fade show`;
+        alertBox.textContent = message;
+        alertBox.style.display = 'block';
+        
+        setTimeout(() => {
+            alertBox.style.display = 'none';
+        }, 3000);
+    }
+
+    function removeProperty(id) {
+        const row = document.getElementById('property-' + id);
+        row.classList.add('fade-out');
+        
+        setTimeout(() => {
+            row.remove();
+            
+            // Check if there are any properties left
+            const tbody = document.querySelector('tbody');
+            if (!tbody.hasChildNodes()) {
+                document.getElementById('propertiesTable').style.display = 'none';
+                document.getElementById('noProperties').style.display = 'block';
+            }
+        }, 500);
+    }
+    </script>
+</body>
+</html>
