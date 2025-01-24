@@ -41,7 +41,7 @@ public class RentalApplicationController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/apply")
+    @PostMapping("/{id}/status")
     @PreAuthorize("hasRole('TENANT')")
     public ResponseEntity<?> applyForProperty(@RequestParam Long propertyId, Authentication authentication) {
         try {
@@ -65,9 +65,6 @@ public class RentalApplicationController {
             application.setStatus(ApplicationStatus.PENDING);
             application.setApplicationDate(LocalDate.now());
             application.setMovingDate(LocalDate.now().plusDays(30)); // Default move-in date 30 days from now
-
-            applicationRepository.save(application);
-
             return ResponseEntity.ok().body(Map.of(
                 "success", true,
                 "message", "Application submitted successfully"
@@ -79,4 +76,5 @@ public class RentalApplicationController {
             ));
         }
     }
+
 }

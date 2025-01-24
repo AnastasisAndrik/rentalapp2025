@@ -207,20 +207,25 @@
             }
 
             // Make a POST request to apply for the property
-            fetch(`/tenant/apply/${currentPropertyId}`, {
+            fetch(`/tenant/properties/${currentPropertyId}/apply`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to apply for property');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (!data.success) {
                     throw new Error(data.message);
                 }
                 rentModal.hide();
                 alert(data.message);
-                window.location.href = '/tenant/dashboard';
+                window.location.href = '/tenant/alerts';
             })
             .catch(error => {
                 console.error('Error:', error);
